@@ -70,6 +70,4 @@ Write-Host ''
     });
   };
 </script>
-<span hidden>#></span>
-</body>
-</html>
+<template>#>
