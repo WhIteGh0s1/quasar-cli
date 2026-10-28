@@ -1,6 +1,6 @@
 <#<!--
 #>
-# Квазар в терминале. Установка: irm whitegh0s1.github.io/quasar | iex
+# Квазар в терминале. Установка: irm quasar.ghostlink.online | iex
 # Этот файл — одновременно скрипт PowerShell и страница для браузера.
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
@@ -53,7 +53,7 @@ Write-Host ''
   <div class="mark">◆ КВАЗАР</div>
   <h1>VPN прямо в терминале</h1>
   <p>Одна команда — и готово. Разрешение Windows спрашивается один раз, дальше Квазар держит подключение сам, даже после перезагрузки.</p>
-  <div class="cmd"><code id="cmd"><b>irm</b> whitegh0s1.github.io/quasar | <b>iex</b></code><button id="copy">Копировать</button></div>
+  <div class="cmd"><code id="cmd"><b>irm</b> quasar.ghostlink.online | <b>iex</b></code><button id="copy">Копировать</button></div>
   <ol>
     <li>Откройте <b>PowerShell</b> и вставьте команду.</li>
     <li>Напишите <b>quasar</b> и вставьте ссылку на свою подписку.</li>

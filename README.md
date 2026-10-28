@@ -3,7 +3,7 @@
 VPN одной командой. Разрешение Windows спрашивается один раз — дальше Квазар держит подключение сам, даже после перезагрузки.
 
 ```powershell
-irm whitegh0s1.github.io/quasar | iex
+irm quasar.ghostlink.online | iex
 ```
 
 Потом в новом окне терминала:
