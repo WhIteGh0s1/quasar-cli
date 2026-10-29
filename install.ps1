@@ -9,79 +9,57 @@ $url = 'https://github.com/WhIteGh0s1/quasar-cli/releases/latest/download/quasar
 $exe = Join-Path $env:TEMP 'quasar-setup.exe'
 $dir = Join-Path $env:USERPROFILE '.quasar\bin'
 
+# The mark and QUASAR in the app's dot style, Braille cells with a
+# brightness digit for each (generated from cli/screen.go).
+$mark = @(
+  '         ⢸         |0000000002000000000',
+  '         ⢸         |0000000002000000000',
+  '         ⢸         |0000000003000000000',
+  '      ⢀⣴⡾⠿⠿⣶⣄⣤⣤⣤⣤⣤⣄|0000001333332222111',
+  '   ⣀⣠⣤⣾⡏   ⠈⣿⣿⣿⣿⡿⠟⠋|0002333300033322211',
+  '⢠⣶⣿⣿⣿⣿⣿⣧⣶⡶⠶⣿⡟⠋⠉    |2233333333233210000',
+  ' ⠉⠉⠉⠉⠉⠁⠈⠙⢻⠛⠉       |0222222133310000000',
+  '         ⢸         |0000000003000000000',
+  '         ⢸         |0000000002000000000',
+  '         ⠸         |0000000001000000000'
+)
+$word = @(
+  '⡎⠉⡆⢸ ⢸ ⣎⣉⡆⠰⣉⡉ ⣎⣉⡆⢸⣉⡱|33330303333330333333',
+  '⠣⠕⠅⠘⠤⠜ ⠇ ⠇⠠⠤⠜ ⠇ ⠇⠸⠈⠢|33333303033330303333'
+)
+
 $e = [char]27
-function Fg($c) { "$e[38;2;$($c[0]);$($c[1]);$($c[2])m" }
-function Bg($c) { "$e[48;2;$($c[0]);$($c[1]);$($c[2])m" }
-$white = 236, 236, 238; $muted = 148, 150, 158; $faint = 96, 98, 106
-$panel = 34, 34, 38; $track = 62, 62, 70; $green = 118, 224, 152; $shadow = 78, 80, 88
-$reset = "$e[0m"
-$width = 64
-
-# The same five-pixel «квазар» the app draws, two pixels per row in half blocks.
-$font = @{
-  'к' = '#..#', '#.#.', '##..', '#.#.', '#..#'
-  'в' = '###.', '#..#', '###.', '#..#', '###.'
-  'а' = '.##.', '...#', '.###', '#..#', '.###'
-  'з' = '###.', '...#', '.##.', '...#', '###.'
-  'р' = '###.', '#..#', '###.', '#...', '#...'
-}
-function Get-Logo {
-  $px = @{}
-  $x = 0
-  foreach ($ch in 'квазар'.ToCharArray()) {
-    $rows = $font[[string]$ch]
-    for ($r = 0; $r -lt 5; $r++) { for ($c = 0; $c -lt 4; $c++) { if ($rows[$r][$c] -eq '#') { $px["$($x + $c),$r"] = 'w' } } }
-    $x += 5
+$levels = @("$e[38;2;0;0;0m", "$e[38;2;70;70;72m", "$e[38;2;150;150;154m", "$e[38;2;240;240;242m")
+$width = 48
+function Write-Art($rows) {
+  foreach ($row in $rows) {
+    $chars, $tones = $row -split '\|'
+    $line = ' ' * [Math]::Floor(($width - $chars.Length) / 2) + '  '
+    for ($i = 0; $i -lt $chars.Length; $i++) { $line += $levels[[int][string]$tones[$i]] + $chars[$i] }
+    [Console]::Write("$line$e[0m`n")
   }
-  foreach ($k in @($px.Keys)) {
-    $p = $k -split ','; $s = "$([int]$p[0] + 1),$([int]$p[1] + 1)"
-    if (-not $px.ContainsKey($s)) { $px[$s] = 'g' }
-  }
-  $lines = @()
-  for ($row = 0; $row -lt 3; $row++) {
-    $line = ''
-    for ($col = 0; $col -lt 31; $col++) {
-      $t = $px["$col,$(2 * $row)"]; $b = $px["$col,$(2 * $row + 1)"]
-      $tc = if ($t -eq 'w') { $white } elseif ($t) { $shadow } else { $null }
-      $bc = if ($b -eq 'w') { $white } elseif ($b) { $shadow } else { $null }
-      if (-not $tc -and -not $bc) { $line += "$reset " }
-      elseif (-not $tc) { $line += "$reset$(Fg $bc)▄" }
-      elseif (-not $bc) { $line += "$reset$(Fg $tc)▀" }
-      else { $line += "$(Fg $tc)$(Bg $bc)▀" }
-    }
-    $lines += $line + $reset
-  }
-  $lines
 }
-
-function Get-Row([string]$text, [int]$visible, $accent) {
-  "  $(Bg $accent) $(Bg $panel)  $text$(Bg $panel)$(' ' * [Math]::Max(0, $width - 3 - $visible))$reset"
-}
-
-function Show-Install([long]$done, [long]$total, [double]$rate, [string]$state, $accent, [bool]$first) {
+function Show-Bar([long]$done, [long]$total, [double]$rate, [string]$state) {
   $p = if ($total -gt 0) { [Math]::Min(1.0, $done / $total) } else { 0 }
-  $bar = 40
-  $full = [int][Math]::Floor($p * $bar)
-  $percent = '{0}%' -f [int]($p * 100)
-  $title = "$(Fg $white)$e[1m$state$e[22m"
-  $line1 = Get-Row ($title + (' ' * ($width - 7 - $state.Length - $percent.Length)) + "$(Fg $muted)$percent") ($width - 7) $accent
-  $line2 = Get-Row ("$(Fg $white)$('█' * $full)$(Fg $track)$('█' * ($bar - $full))") $bar $accent
-  $blank = Get-Row '' 0 $accent
-  $info = '{0:0.0} / {1:0.0} МБ   {2:0.0} МБ/с' -f ($done / 1MB), ($total / 1MB), ($rate / 1MB)
-  $hint = "$(' ' * (2 + $width - $info.Length))$(Fg $faint)$info$reset"
-  if (-not $first) { [Console]::Write("$e[6A") }
-  foreach ($l in $blank, $line1, $blank, $line2, $blank, $hint) { [Console]::Write("$e[2K$l`n") }
+  $full = [int][Math]::Floor($p * $width)
+  $bar = "  $($levels[3])$('━' * $full)$e[38;2;40;40;44m$('━' * ($width - $full))$e[0m"
+  $info = if ($total -gt 0) { '{0:0.0} / {1:0.0} МБ' -f ($done / 1MB), ($total / 1MB) } else { '' }
+  $text = "$state"
+  $pad = [Math]::Max(1, $width - $text.Length - $info.Length)
+  [Console]::Write("$e[2A$e[2K$bar`n$e[2K  $($levels[2])$text$(' ' * $pad)$($levels[1])$info$e[0m`n")
 }
 
 $vt = $false
 try { $vt = $Host.UI.SupportsVirtualTerminal -and -not [Console]::IsOutputRedirected } catch {}
-$clock = [Diagnostics.Stopwatch]::StartNew()
 if ($vt) {
   [Console]::Write("`n")
-  foreach ($l in Get-Logo) { [Console]::Write("  $(' ' * [Math]::Floor(($width - 31) / 2))$l`n") }
+  Write-Art $mark
   [Console]::Write("`n")
+  Write-Art $word
+  [Console]::Write("`n`n`n`n")
   [Console]::CursorVisible = $false
   try {
+    $clock = [Diagnostics.Stopwatch]::StartNew()
     $request = [Net.HttpWebRequest]::Create($url)
     $request.UserAgent = 'quasar-install'
     $response = $request.GetResponse()
@@ -89,33 +67,30 @@ if ($vt) {
     $in = $response.GetResponseStream()
     $out = [IO.File]::Create($exe)
     $buffer = New-Object byte[] 131072
-    $done = 0L; $rate = 0.0; $mark = 0L; $markBytes = 0L; $drawn = -100L
-    Show-Install 0 $total 0 'Скачиваю Квазар' $white $true
+    $done = 0L; $drawn = -100L
     while ($true) {
       $n = $in.Read($buffer, 0, $buffer.Length)
       if ($n -le 0) { break }
       $out.Write($buffer, 0, $n)
       $done += $n
-      $now = $clock.ElapsedMilliseconds
-      if ($now - $mark -ge 400) { $rate = ($done - $markBytes) * 1000.0 / ($now - $mark); $mark = $now; $markBytes = $done }
-      if ($now - $drawn -ge 60) { Show-Install $done $total $rate 'Скачиваю Квазар' $white $false; $drawn = $now }
+      if ($clock.ElapsedMilliseconds - $drawn -ge 50) { Show-Bar $done $total 0 'Загрузка'; $drawn = $clock.ElapsedMilliseconds }
     }
     $out.Close(); $in.Close(); $response.Close()
-    Show-Install $total $total $rate 'Устанавливаю' $white $false
+    Show-Bar $total $total 0 'Установка'
     & $exe install --quiet
-    Show-Install $total $total $rate 'Готово' $green $false
+    Show-Bar $total $total 0 'Готово'
   } finally {
     [Console]::CursorVisible = $true
   }
 } else {
-  Write-Host '  Скачиваю Квазар…'
+  Write-Host '  Загрузка Квазара…'
   Invoke-WebRequest $url -OutFile $exe -UseBasicParsing
   & $exe install --quiet
 }
 
 Remove-Item $exe -ErrorAction SilentlyContinue
 if (($env:Path -split ';') -notcontains $dir) { $env:Path = "$env:Path;$dir" }
-Start-Sleep -Milliseconds 700
+Start-Sleep -Milliseconds 600
 & (Join-Path $dir 'quasar.exe')
 <#-->
 <!doctype html>
