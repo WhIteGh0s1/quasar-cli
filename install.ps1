@@ -37,7 +37,10 @@ function Show-Panel([long]$done, [long]$total, [double]$rate, [string]$note) {
   Write-Row @()
   Write-Row @('◆ ', 'White', 'Квазар', 'White')
   Write-Row @()
-  Write-Row @(('█' * $full) + $edge, 'White', ('█' * $rest), 'DarkGray', ('{0,6}' -f ('{0}%' -f [int]($p * 100))), 'Gray')
+  $filled = ('█' * $full) + $edge
+  $track = '█' * $rest
+  $percent = '{0,6}' -f ('{0}%' -f [int]($p * 100))
+  Write-Row @($filled, 'White', $track, 'DarkGray', $percent, 'Gray')
   if ($note) {
     Write-Row @($note, 'Gray')
   } else {
