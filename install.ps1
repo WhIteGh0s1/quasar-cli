@@ -46,18 +46,24 @@ $width = 48
 function Show-Bar([long]$done, [long]$total, [double]$rate, [string]$state) {
   $p = if ($total -gt 0) { [Math]::Min(1.0, $done / $total) } else { 0 }
   $full = [int][Math]::Floor($p * $width)
-  $bar = "  $($levels[3])$('━' * $full)$e[38;2;40;40;44m$('━' * ($width - $full))$e[0m"
+  $bar = "$script:left  $($levels[3])$('━' * $full)$e[38;2;40;40;44m$('━' * ($width - $full))$e[0m"
   $info = if ($total -gt 0) { '{0:0.0} / {1:0.0} МБ' -f ($done / 1MB), ($total / 1MB) } else { '' }
   $text = "$state"
   $pad = [Math]::Max(1, $width - $text.Length - $info.Length)
-  [Console]::Write("$e[2A$e[2K$bar`n$e[2K  $($levels[2])$text$(' ' * $pad)$($levels[1])$info$e[0m`n")
+  [Console]::Write("$e[2A$e[2K$bar`n$e[2K$script:left  $($levels[2])$text$(' ' * $pad)$($levels[1])$info$e[0m`n")
 }
 
 $vt = $false
 try { $vt = $Host.UI.SupportsVirtualTerminal -and -not [Console]::IsOutputRedirected } catch {}
 if ($vt) {
-  [Console]::Write("`n")
-  foreach ($row in $art) { [Console]::Write('     ' + $row.Replace('§', $e) + "`n") }
+  # The bar is drawn with ━, which the console's legacy code page lacks.
+  $encoding = [Console]::OutputEncoding
+  [Console]::OutputEncoding = [Text.Encoding]::UTF8
+  $size = $Host.UI.RawUI.WindowSize
+  $script:left = ' ' * [Math]::Max(0, [Math]::Floor(($size.Width - $width - 2) / 2))
+  $top = [Math]::Max(0, [Math]::Floor(($size.Height - $art.Count - 5) / 2))
+  [Console]::Write("$e[2J$e[3J$e[H" + ("`n" * $top))
+  foreach ($row in $art) { [Console]::Write($script:left + '     ' + $row.Replace('§', $e) + "`n") }
   [Console]::Write("`n`n`n`n")
   [Console]::CursorVisible = $false
   try {
@@ -83,6 +89,7 @@ if ($vt) {
     Show-Bar $total $total 0 'Готово'
   } finally {
     [Console]::CursorVisible = $true
+    [Console]::OutputEncoding = $encoding
   }
 } else {
   Write-Host '  Загрузка Квазара…'
