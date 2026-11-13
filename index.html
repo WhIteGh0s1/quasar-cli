@@ -43,10 +43,13 @@ $art = @(
 $e = [char]27
 $levels = @("$e[38;2;0;0;0m", "$e[38;2;70;70;72m", "$e[38;2;150;150;154m", "$e[38;2;240;240;242m")
 $width = 48
+# Consolas in the Windows 10 console host has no heavy line; a half block
+# draws the same bar there.
+$stroke = if ($env:WT_SESSION) { '━' } else { '▀' }
 function Show-Bar([long]$done, [long]$total, [double]$rate, [string]$state) {
   $p = if ($total -gt 0) { [Math]::Min(1.0, $done / $total) } else { 0 }
   $full = [int][Math]::Floor($p * $width)
-  $bar = "$script:left  $($levels[3])$('━' * $full)$e[38;2;40;40;44m$('━' * ($width - $full))$e[0m"
+  $bar = "$script:left  $($levels[3])$($stroke * $full)$e[38;2;40;40;44m$($stroke * ($width - $full))$e[0m"
   $info = if ($total -gt 0) { '{0:0.0} / {1:0.0} МБ' -f ($done / 1MB), ($total / 1MB) } else { '' }
   $text = "$state"
   $pad = [Math]::Max(1, $width - $text.Length - $info.Length)
@@ -56,7 +59,7 @@ function Show-Bar([long]$done, [long]$total, [double]$rate, [string]$state) {
 $vt = $false
 try { $vt = $Host.UI.SupportsVirtualTerminal -and -not [Console]::IsOutputRedirected } catch {}
 if ($vt) {
-  # The bar is drawn with ━, which the console's legacy code page lacks.
+  # The bar's line characters are missing from the console's legacy code page.
   $encoding = [Console]::OutputEncoding
   [Console]::OutputEncoding = [Text.Encoding]::UTF8
   $size = $Host.UI.RawUI.WindowSize

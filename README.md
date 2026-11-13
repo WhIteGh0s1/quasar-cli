@@ -21,6 +21,21 @@ quasar
 | `quasar ls`, `quasar ping` | серверы, с пингом |
 | `quasar use 3` | выбрать сервер |
 | `quasar sub <ссылка>` | своя подписка |
+| `quasar tun on` / `off` | весь трафик через VPN или только прокси |
 | `quasar uninstall` | удалить совсем |
 
-Windows 10 и 11, x64. Внутри — mihomo и Xray.
+## Linux-сервер
+
+```sh
+curl -fsSL quasar.ghostlink.online/linux | sudo sh
+```
+
+Квазар встаёт службой systemd. По умолчанию трафик идёт через локальный прокси `127.0.0.1:17891`, SSH не трогается; программам его можно указать так:
+
+```sh
+export all_proxy=socks5h://127.0.0.1:17891 https_proxy=http://127.0.0.1:17891
+```
+
+`sudo quasar tun on` пустит через VPN весь трафик сервера.
+
+Windows 10 и 11 (x64), Linux amd64 и arm64. Внутри — mihomo и Xray.
